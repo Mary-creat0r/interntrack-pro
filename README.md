@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-InternTrack Pro
-=======
 # Introduction to GitHub
 
 <img src="https://octodex.github.com/images/Professortocat_v2.png" align="right" height="200px" />
@@ -17,4 +14,3 @@ Remember, it's self-paced so feel free to take a break! ☕️
 
 &copy; 2025 GitHub &bull; [Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md) &bull; [MIT License](https://gh.io/mit)
 
->>>>>>> 14c62fa528e4a4aa799db91764095b5308b72925
