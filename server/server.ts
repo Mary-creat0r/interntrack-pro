@@ -1,12 +1,15 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
+import applicationsRouter from './routes/applications';
 
 //create the Express application
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 //Middleware - parse incoming JSON request
 app.use(express.json());
+app.use('/api/applications', applicationsRouter);
 
 //Serve the landing page
 app.get('/', (req, res) => {
@@ -24,4 +27,6 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 
-})
+}).on('error', (err) => {
+    console.error('Server error:', err);
+});
