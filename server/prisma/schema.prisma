@@ -1,0 +1,39 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+id          Int         @id @default(autoincrement())
+email       String      @unique
+password    String
+name        String
+createdAt   DateTime     @default(now())
+applications Application[]
+}
+
+model Application{
+id              Int            @id @default(autoincrement())
+company         String
+role            String
+status          Status         @default(APPLIED)
+appliedDate     DateTime       @default(now())
+nextActionDate  DateTime?
+notes           String?
+jobUrl          String?
+userId          Int
+user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+updatedAt       DateTime        @updatedAt
+}
+
+enum Status {
+APPLIED
+INTERVIEW
+ASSESSMENT
+OFFER
+REJECTED
+}

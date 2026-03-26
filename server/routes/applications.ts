@@ -10,8 +10,9 @@ const applications = [
     status:'INTERVIEW',
     appliedDate:'2026-03-01',
     nextActionDate:'2026-03-20',
-    notes:'Found on LinkedIn'
-},
+    notes:'Found on LinkedIn',
+    jobUrl: null
+    },
     {
         id:2,
         company: 'Meta',
@@ -19,7 +20,8 @@ const applications = [
         status:'APPLIED',
         appliedDate:'2026-03-05',
         nextActionDate:'2026-03-25',
-        notes:'Referral from friend'
+        notes:'Referral from friend',
+        jobUrl: null
     },
     {
         id:3,
@@ -28,7 +30,8 @@ const applications = [
         status:'ASSESSMENT',
         appliedDate:'2026-02-28',
         nextActionDate:'2026-02-30',
-        notes:'Applied via careers page'
+        notes:'Applied via careers page',
+        jobUrl: null
     },
 ]
 
@@ -81,7 +84,7 @@ if (!application) {
 //POST/api/applications
 //Create a new application
 router.post('/', (req:Request, res:Response) => {
-    const {company, role, status, appliedDate, nextActionDate, notes} = req.body;
+    const {company, role, status, appliedDate, nextActionDate, notes, jobUrl} = req.body;
 
     if (!company || !role || !status) {
         res.status(404).json({
@@ -98,6 +101,7 @@ router.post('/', (req:Request, res:Response) => {
         appliedDate: appliedDate || new Date().toISOString().split('T')[0],
         nextActionDate: nextActionDate || null,
         notes: notes || '',
+        jobUrl: jobUrl || null
     };
     applications.push(newApplication);
 
@@ -140,11 +144,13 @@ router.delete('/:id',(req:Request, res:Response) => {
         })
         return;
     }
+    const deletedApplication = applications[index];
     applications.splice(index, 1);
 
     //delete the application
     res.status(200).json({
         message: 'Application deleted successfully.',
+        application: deletedApplication
     });
 });
 
