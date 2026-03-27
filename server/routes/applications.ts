@@ -1,157 +1,168 @@
+import prisma from "../lib/prisma";
 import {Router, Request, Response } from 'express';
 const router = Router();
 
-//Temporary data - would be replaced by PostgresSQL in Week 3
-const applications = [
-    {
-    id:1,
-    company: 'Google',
-    role: 'Software Engineer Intern',
-    status:'INTERVIEW',
-    appliedDate:'2026-03-01',
-    nextActionDate:'2026-03-20',
-    notes:'Found on LinkedIn',
-    jobUrl: null
-    },
-    {
-        id:2,
-        company: 'Meta',
-        role: 'Frontend Intern',
-        status:'APPLIED',
-        appliedDate:'2026-03-05',
-        nextActionDate:'2026-03-25',
-        notes:'Referral from friend',
-        jobUrl: null
-    },
-    {
-        id:3,
-        company: 'Apple',
-        role: 'iOS Developer Intern',
-        status:'ASSESSMENT',
-        appliedDate:'2026-02-28',
-        nextActionDate:'2026-02-30',
-        notes:'Applied via careers page',
-        jobUrl: null
-    },
-]
-
 //GET/api/applications/stats
 //Returns stats
-router.get('/stats',(_req:Request, res:Response) => {
-    //Total number of applications
-    const total = applications.length;
+router.get('/stats',async (_req:Request, res:Response) => {
+    try {
+        //Total number of applications
+        const total = await prisma.application.count();
+        const byStatusRaw = await prisma.application.groupBy({
+            by: ['status'],
+            _count: {status: true}
+        });
 //How many applications in each status
-    const byStatus = applications.reduce((acc, app) => {
-        acc[app.status] = (acc[app.status] || 0) + 1;
-        return acc;
-        //record it as String: Number
-    }, {} as Record<string, number>);
+        const byStatus = byStatusRaw.reduce((acc, item) => {
+            acc[item.status] = item._count.status;
+            return acc;
+            //record it as String: Number
+        }, {} as Record<string, number>);
 
 
 //Number of applications with response, not equal to applied
-    const responded = applications.filter(a => a.status != 'APPLIED').length;
+        const responded = await prisma.application.count({
+            where: {status: {not: 'APPLIED'}}
+        });
 //Percentage of applications responded
-    const responseRate = Math.round((responded / total) * 100);
+        const responseRate = total > 0 ? Math.round((responded / total) * 100) : 0;
 
 //send the result as JSON
-    res.json({
-        totalApplications: total,
-        responseRate,
-        byStatus
-    });
+        res.json({
+            totalApplications: total,
+            responseRate,
+            byStatus
+        });
+    } catch (error) {
+        res.status(500).json({error: 'Failed to fetch stats'});
+    }
 });
 
 //GET/api/applications
 //Returns all applications
-router.get('/',(_req:Request, res:Response) => {
-    //return all applications as JSON
-res.json({applications});
-});
+router.get('/',async (_req:Request, res:Response) => {
+    try {
+        const applications = await prisma.application.findMany({
+            orderBy: {appliedDate: 'desc'}
+        });
+        //return all applications as JSON
+        res.json({applications});
+    } catch(error) {
+        res.status(500).json({error: 'Failed to fetch applications'});
+    }
+    });
+
 
 //GET/api/applications/:id
 //Returns one application by id
-router.get('/:id',(req:Request, res:Response) => {
-    const id = parseInt(req.params.id as string);
-    const application = applications.find(a  => a.id === id);
+router.get('/:id',async (req:Request, res:Response) => {
+    try {
+        const id = parseInt(req.params.id as string);
+        const application = await prisma.application.findUnique({
+            where: {id}
+        });
+        if (!application) {
+            res.status(404).json({error: 'Application not Found'});
+            return;
+        }
+        res.json({application});
+    } catch(error) {
+        res.status(500).json({error: 'Failed to fetch applications'});
+    }
+    });
 
-if (!application) {
-    res.status(404).json('Application not Found');
-    return;
-}
-    res.json({application});
-});
 
 //POST/api/applications
 //Create a new application
-router.post('/', (req:Request, res:Response) => {
-    const {company, role, status, appliedDate, nextActionDate, notes, jobUrl} = req.body;
+router.post('/', async (req:Request, res:Response) => {
+    try {
+        const {company, role, status, appliedDate, nextActionDate, notes, jobUrl} = req.body;
 
-    if (!company || !role || !status) {
-        res.status(404).json({
-            error: 'Company, role and status are required'
+        if (!company || !role || !status) {
+            res.status(404).json({
+                error: 'Company, role and status are required'
+            });
+            return;
+        }
+
+        const application = await prisma.application.create({
+            data: {
+                company,
+                role,
+                status,
+                appliedDate: appliedDate ? new Date(appliedDate) : new Date(),
+                nextActionDate: nextActionDate ? new Date(nextActionDate) : null,
+                notes: notes || '',
+                jobUrl: jobUrl || null,
+                userId: 1  // temporary — will come from JWT token in Week 4
+            }
         });
-        return;
+
+        res.status(201).json({
+            message: 'Application created successfully.',
+            application
+        });
+    } catch(error) {
+        console.error('POST error:', error);
+        res.status(500).json({error: 'Failed to create application'});
     }
-
-    const newApplication = {
-        id: applications.length + 1,
-        company,
-        role,
-        status,
-        appliedDate: appliedDate || new Date().toISOString().split('T')[0],
-        nextActionDate: nextActionDate || null,
-        notes: notes || '',
-        jobUrl: jobUrl || null
-    };
-    applications.push(newApplication);
-
-    res.status(201).json({
-        message: 'Application created successfully.',
-    application: newApplication
     });
-});
+
 
 //PUT /api/applications/:id
 //Updates an existing application
-router.put('/:id',(req:Request, res:Response) => {
-    const id = parseInt(req.params.id as string);
-    const index = applications.findIndex(a => a.id === id);
+router.put('/:id', async (req:Request, res:Response) => {
+    try {
+        const id = parseInt(req.params.id as string);
 
-    if (index === -1) {
-        res.status(404).json({
-            error: 'Application not found'
+        const existing = await prisma.application.findUnique(
+            {where: {id}}
+        );
+        if (!existing) {
+            res.status(404).json({
+                error: 'Application not found'
+            });
+            return;
+        }
+
+        const application = await prisma.application.update({
+            where: {id},
+            data: req.body
         });
-        return;
+
+        res.json({
+            message: 'Application updated successfully.',
+            application
+        });
+    } catch(error) {
+        res.status(500).json({error: 'Failed to update application'});
     }
-
-    applications[index] = {...applications[index], ...req.body};
-
-    res.json({
-        message: 'Application updated successfully.',
-        application: applications[index]
     });
-});
+
 
 //DELETE/api/applications/:id
 //Delete an application
-router.delete('/:id',(req:Request, res:Response) => {
-    const id = parseInt(req.params.id as string);
-    const index = applications.findIndex(a => a.id === id);
+router.delete('/:id', async (req:Request, res:Response) => {
+    try {
+        const id = parseInt(req.params.id as string);
 
-    if (index === -1) {
-        res.status(404).json({
-            error: 'Application not found'
-        })
-        return;
+        const existing = await prisma.application.findUnique({where: {id}});
+        if (!existing) {
+            res.status(404).json({error: 'Application not found'});
+            return;
+        }
+
+        const application = await prisma.application.delete({
+            where: {id}
+        });
+
+        res.status(200).json({
+            message: 'Application deleted successfully.',
+            application
+        });
+    } catch (error) {
+        res.status(500).json({error: 'Failed to delete application'});
     }
-    const deletedApplication = applications[index];
-    applications.splice(index, 1);
-
-    //delete the application
-    res.status(200).json({
-        message: 'Application deleted successfully.',
-        application: deletedApplication
-    });
 });
 
 //import and use the router
