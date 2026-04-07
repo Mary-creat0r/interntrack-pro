@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import applicationsRouter from './routes/applications';
+import authRoutes from './routes/auth';
 
 //create the Express application
 const app = express();
@@ -10,6 +11,7 @@ const PORT = process.env.PORT || 3001;
 //Middleware - parse incoming JSON request
 app.use(express.json());
 app.use('/api/applications', applicationsRouter);
+app.use('/api/auth', authRoutes);
 
 //Serve the landing page
 app.get('/', (req, res) => {

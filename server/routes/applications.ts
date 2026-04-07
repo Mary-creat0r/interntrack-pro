@@ -1,16 +1,21 @@
+import { authenticateToken, AuthRequest } from "../middleware/auth";
 import prisma from "../lib/prisma";
 import {Router, Request, Response } from 'express';
 const router = Router();
 
 //GET/api/applications/stats
 //Returns stats
-router.get('/stats',async (_req:Request, res:Response) => {
+router.get('/stats', authenticateToken, async (req:AuthRequest, res:Response) => {
     try {
+        const userId = req.user!.userId;
         //Total number of applications
-        const total = await prisma.application.count();
+        const total = await prisma.application.count({
+            where: { userId }
+        });
         const byStatusRaw = await prisma.application.groupBy({
             by: ['status'],
-            _count: {status: true}
+            where: { userId },
+            _count: {status: true }
         });
 //How many applications in each status
         const byStatus = byStatusRaw.reduce((acc, item) => {
@@ -22,7 +27,9 @@ router.get('/stats',async (_req:Request, res:Response) => {
 
 //Number of applications with response, not equal to applied
         const responded = await prisma.application.count({
-            where: {status: {not: 'APPLIED'}}
+            where: {
+                userId,
+                status: {not: 'APPLIED'}}
         });
 //Percentage of applications responded
         const responseRate = total > 0 ? Math.round((responded / total) * 100) : 0;
@@ -40,43 +47,51 @@ router.get('/stats',async (_req:Request, res:Response) => {
 
 //GET/api/applications
 //Returns all applications
-router.get('/',async (_req:Request, res:Response) => {
+router.get('/', authenticateToken, async (req:AuthRequest, res:Response) => {
     try {
+        const userId = req.user!.userId;
         const applications = await prisma.application.findMany({
+            where: { userId },
             orderBy: {appliedDate: 'desc'}
         });
         //return all applications as JSON
-        res.json({applications});
+        res.json({ applications });
     } catch(error) {
-        res.status(500).json({error: 'Failed to fetch applications'});
+        res.status(500).json({ error: 'Failed to fetch applications' });
     }
     });
 
 
 //GET/api/applications/:id
 //Returns one application by id
-router.get('/:id',async (req:Request, res:Response) => {
+router.get('/:id', authenticateToken, async (req:AuthRequest, res:Response) => {
     try {
         const id = parseInt(req.params.id as string);
-        const application = await prisma.application.findUnique({
-            where: {id}
+        const userId = req.user!.userId;
+
+        const application = await prisma.application.findFirst({
+            where: {
+                id,
+                userId //ensures user can only see their own application
+            }
         });
         if (!application) {
-            res.status(404).json({error: 'Application not Found'});
+            res.status(404).json({error: 'Application not found'});
             return;
         }
         res.json({application});
     } catch(error) {
-        res.status(500).json({error: 'Failed to fetch applications'});
+        res.status(500).json({error: 'Failed to fetch application'});
     }
     });
 
 
 //POST/api/applications
 //Create a new application
-router.post('/', async (req:Request, res:Response) => {
+router.post('/', authenticateToken, async (req:AuthRequest, res:Response) => {
     try {
         const {company, role, status, appliedDate, nextActionDate, notes, jobUrl} = req.body;
+        const userId = req.user!.userId;
 
         if (!company || !role || !status) {
             res.status(404).json({
@@ -94,7 +109,7 @@ router.post('/', async (req:Request, res:Response) => {
                 nextActionDate: nextActionDate ? new Date(nextActionDate) : null,
                 notes: notes || '',
                 jobUrl: jobUrl || null,
-                userId: 1  // temporary — will come from JWT token in Week 4
+                userId // real userId from JWT token
             }
         });
 
@@ -103,21 +118,22 @@ router.post('/', async (req:Request, res:Response) => {
             application
         });
     } catch(error) {
-        console.error('POST error:', error);
-        res.status(500).json({error: 'Failed to create application'});
+        res.status(500).json({ error: 'Failed to create application' });
     }
     });
 
 
 //PUT /api/applications/:id
 //Updates an existing application
-router.put('/:id', async (req:Request, res:Response) => {
+router.put('/:id', authenticateToken, async (req:AuthRequest, res:Response) => {
     try {
         const id = parseInt(req.params.id as string);
+        const userId = req.user!.userId;
 
-        const existing = await prisma.application.findUnique(
-            {where: {id}}
+        const existing = await prisma.application.findFirst(
+            {where: {id, userId }}
         );
+
         if (!existing) {
             res.status(404).json({
                 error: 'Application not found'
@@ -126,7 +142,7 @@ router.put('/:id', async (req:Request, res:Response) => {
         }
 
         const application = await prisma.application.update({
-            where: {id},
+            where: { id },
             data: req.body
         });
 
@@ -142,18 +158,21 @@ router.put('/:id', async (req:Request, res:Response) => {
 
 //DELETE/api/applications/:id
 //Delete an application
-router.delete('/:id', async (req:Request, res:Response) => {
+router.delete('/:id', authenticateToken, async (req:AuthRequest, res:Response) => {
     try {
         const id = parseInt(req.params.id as string);
+        const userId = req.user!.userId;
 
-        const existing = await prisma.application.findUnique({where: {id}});
+        const existing = await prisma.application.findFirst({
+            where: { id, userId }
+        });
         if (!existing) {
             res.status(404).json({error: 'Application not found'});
             return;
         }
 
         const application = await prisma.application.delete({
-            where: {id}
+            where: { id }
         });
 
         res.status(200).json({
