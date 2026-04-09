@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
+import Landing from './pages/Landing'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import AddApplication from './pages/AddApplication'
@@ -9,6 +10,7 @@ function App() {
     return (
         <BrowserRouter>
             <Routes>
+                <Route path="/" element={<Landing />} />        ← shows landing page at /
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/dashboard" element={
@@ -21,8 +23,7 @@ function App() {
                         <AddApplication />
                     </ProtectedRoute>
                 } />
-                <Route path="/" element={<Navigate to="/login" />} />
-                <Route path="*" element={<Navigate to="/login" />} />
+                <Route path="*" element={<Navigate to="/" />} /> ← redirects unknown URLs to landing
             </Routes>
         </BrowserRouter>
     )

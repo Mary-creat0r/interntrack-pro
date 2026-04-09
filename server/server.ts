@@ -14,10 +14,8 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({
     origin: [
         'http://localhost:5173',
-        'https://interntrack-pro.vercel.app'
-
-
-
+        'https://interntrack-pro.vercel.app', //main URL
+        'https://interntrack-ffq7244bd-marys-projects-8f62ceb8.vercel.app' //branch URL
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
