@@ -1,16 +1,66 @@
-# Introduction to GitHub
+# InternTrack Pro
 
-<img src="https://octodex.github.com/images/Professortocat_v2.png" align="right" height="200px" />
+A full-stack internship application tracker for university students.
+Stop losing track of applications across Gmail, Notion and memory.
+Track your entire pipeline in one dashboard.
 
-Hey Mary-creat0r!
+## Live Demo
+- Frontend: [link after deployment]
+- API Docs: [link after deployment]/api-docs
 
-Mona here. I'm done preparing your exercise. Hope you enjoy! 💚
+## Tech Stack
+- React + TypeScript — component-based frontend
+- Express + Node.js — REST API
+- PostgreSQL + Prisma — relational database with type-safe queries
+- JWT + bcrypt — secure authentication
+- Tailwind CSS — utility-first styling
+- Swagger/OpenAPI — API documentation
 
-Remember, it's self-paced so feel free to take a break! ☕️
+## Setup Instructions
 
-[![](https://img.shields.io/badge/Go%20to%20Exercise-%E2%86%92-1f883d?style=for-the-badge&logo=github&labelColor=197935)](https://github.com/Mary-creat0r/interntrack-pro/issues/1)
+### Prerequisites
+- Node.js v18+
+- PostgreSQL installed and running
 
----
+### 1. Clone the repository
+git clone https://github.com/Mary-creat0r/interntrack-pro.git
+cd interntrack-pro
 
-&copy; 2025 GitHub &bull; [Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md) &bull; [MIT License](https://gh.io/mit)
+### 2. Backend setup
+cd server
+npm install
+cp .env.example .env
 
+Open .env and fill in your own values:
+- DATABASE_URL: your PostgreSQL connection string
+- JWT_SECRET: any long random string
+- PORT: 3001
+
+npx prisma migrate dev
+npm run dev
+
+Server runs at http://localhost:3001
+API docs at http://localhost:3001/api-docs
+
+### 3. Frontend setup
+Open a new terminal:
+cd client
+npm install
+npm run dev
+
+App runs at http://localhost:5173
+
+## Environment Variables
+See server/.env.example for all required variables.
+Never commit your actual .env file.
+
+## API Documentation
+Interactive Swagger docs available at /api-docs when server is running.
+
+## Features
+- Register and login securely with JWT authentication
+- Add internship applications with company, role, status and dates
+- Update application status as it progresses through the pipeline
+- Delete applications you are no longer pursuing
+- Dashboard analytics — response rate and pipeline breakdown
+- All data persists in PostgreSQL database
