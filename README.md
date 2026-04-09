@@ -5,8 +5,8 @@ Stop losing track of applications across Gmail, Notion and memory.
 Track your entire pipeline in one dashboard.
 
 ## Live Demo
-- Frontend: [link after deployment]
-- API Docs: [link after deployment]/api-docs
+- App: https://interntrack-pro.vercel.app
+- API Docs: https://interntrack-pro-production.up.railway.app/api-docs
 
 ## Tech Stack
 - React + TypeScript — component-based frontend
