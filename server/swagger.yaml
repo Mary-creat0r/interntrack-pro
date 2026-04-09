@@ -1,0 +1,456 @@
+openapi: 3.0.0
+
+info:
+  title: InternTrack Pro API
+  version: 1.0.0
+  description: >
+    REST API for InternTrack Pro — an internship application tracker 
+    for university students. Built with Express, TypeScript, PostgreSQL 
+    and Prisma ORM.
+
+servers:
+  - url: http://localhost:3001
+    description: Local development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        JWT token obtained from /api/auth/login or /api/auth/register.
+        Include as: Authorization: Bearer <token>
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Mary Ogunrewo
+        email:
+          type: string
+          example: mary@interntrack.com
+        createdAt:
+          type: string
+          format: date-time
+
+    Application:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        company:
+          type: string
+          example: Google
+        role:
+          type: string
+          example: Software Engineer Intern
+        status:
+          type: string
+          enum: [APPLIED, INTERVIEW, ASSESSMENT, OFFER, REJECTED]
+          example: APPLIED
+        appliedDate:
+          type: string
+          format: date-time
+        nextActionDate:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        jobUrl:
+          type: string
+          nullable: true
+        userId:
+          type: integer
+          example: 1
+        updatedAt:
+          type: string
+          format: date-time
+
+    NewApplication:
+      type: object
+      required:
+        - company
+        - role
+        - status
+      properties:
+        company:
+          type: string
+          example: Google
+        role:
+          type: string
+          example: Software Engineer Intern
+        status:
+          type: string
+          enum: [APPLIED, INTERVIEW, ASSESSMENT, OFFER, REJECTED]
+          example: APPLIED
+        appliedDate:
+          type: string
+          format: date
+          example: "2026-03-25"
+        nextActionDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2026-04-01"
+        notes:
+          type: string
+          nullable: true
+          example: Found on LinkedIn
+        jobUrl:
+          type: string
+          nullable: true
+          example: https://careers.google.com/jobs/123
+
+    Stats:
+      type: object
+      properties:
+        totalApplications:
+          type: integer
+          example: 12
+        responseRate:
+          type: integer
+          example: 67
+        byStatus:
+          type: object
+          example:
+            APPLIED: 6
+            INTERVIEW: 3
+            ASSESSMENT: 2
+            OFFER: 1
+            REJECTED: 0
+
+    AuthResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiJ9...
+        user:
+          $ref: '#/components/schemas/User'
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Application not found
+
+paths:
+  /api/auth/register:
+    post:
+      summary: Register a new account
+      description: Creates a new user account and returns a JWT token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: Mary Ogunrewo
+                email:
+                  type: string
+                  example: mary@interntrack.com
+                password:
+                  type: string
+                  example: securepassword123
+      responses:
+        '201':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/login:
+    post:
+      summary: Login to existing account
+      description: Authenticates a user and returns a JWT token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: mary@interntrack.com
+                password:
+                  type: string
+                  example: securepassword123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid email or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/applications:
+    get:
+      summary: Get all applications
+      description: Returns all applications belonging to the authenticated user
+      tags:
+        - Applications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully returned applications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  applications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Application'
+        '401':
+          description: No token provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create a new application
+      description: Creates a new internship application for the authenticated user
+      tags:
+        - Applications
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewApplication'
+      responses:
+        '201':
+          description: Application created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  application:
+                    $ref: '#/components/schemas/Application'
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorised
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/applications/stats:
+    get:
+      summary: Get application analytics
+      description: >
+        Returns analytics for the authenticated user's applications including
+        total count, response rate and pipeline breakdown by status
+      tags:
+        - Applications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully returned stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stats'
+        '401':
+          description: Unauthorised
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/applications/{id}:
+    get:
+      summary: Get a single application
+      description: Returns one application by ID — only if it belongs to the authenticated user
+      tags:
+        - Applications
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Application ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Successfully returned application
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  application:
+                    $ref: '#/components/schemas/Application'
+        '401':
+          description: Unauthorised
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Application not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update an application
+      description: Updates an existing application — only if it belongs to the authenticated user
+      tags:
+        - Applications
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Application ID
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewApplication'
+      responses:
+        '200':
+          description: Application updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  application:
+                    $ref: '#/components/schemas/Application'
+        '401':
+          description: Unauthorised
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Application not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete an application
+      description: Permanently removes an application — only if it belongs to the authenticated user
+      tags:
+        - Applications
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Application ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Application deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  application:
+                    $ref: '#/components/schemas/Application'
+        '401':
+          description: Unauthorised
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Application not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

@@ -3,6 +3,8 @@ import prisma from "../lib/prisma";
 import {Router, Request, Response } from 'express';
 const router = Router();
 
+
+
 //GET/api/applications/stats
 //Returns stats
 router.get('/stats', authenticateToken, async (req:AuthRequest, res:Response) => {

@@ -1,3 +1,6 @@
+import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
@@ -8,10 +11,23 @@ import authRoutes from './routes/auth';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 //Middleware - parse incoming JSON request
 app.use(express.json());
 app.use('/api/applications', applicationsRouter);
 app.use('/api/auth', authRoutes);
+
+// Swagger documentation
+const swaggerDocument = YAML.load(
+    path.join(__dirname, 'swagger.yaml')
+);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 //Serve the landing page
 app.get('/', (req, res) => {
