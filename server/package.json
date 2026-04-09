@@ -5,6 +5,7 @@
   "main": "server.ts",
   "scripts": {
     "dev": "nodemon --exec ts-node server.ts --watch server",
+    "build": "tsc",
     "start": "node dist/server.js"
   },
   "keywords": [],

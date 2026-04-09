@@ -1,0 +1,8 @@
+{
+  "name": "interntrack-pro",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd server && npm install && npx prisma generate && npm run build",
+    "start": "cd server && npm start"
+  }
+}
