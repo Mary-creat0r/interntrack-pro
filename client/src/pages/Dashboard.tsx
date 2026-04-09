@@ -1,3 +1,4 @@
+import API_URL from '../config';
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
@@ -37,8 +38,8 @@ function Dashboard() {
             const headers = { 'Authorization': `Bearer ${token}` }
 
             const [appsRes, statsRes] = await Promise.all([
-                fetch('http://localhost:3001/api/applications', { headers }),
-                fetch('http://localhost:3001/api/applications/stats', { headers })
+                fetch(`${API_URL}/api/applications`, { headers}),
+                fetch(`${API_URL}/api/applications/stats`, { headers })
             ])
 
             const appsData = await appsRes.json()
@@ -54,7 +55,7 @@ function Dashboard() {
     }
     const handleStatusUpdate = async (id: number, newStatus: string) => {
         try {
-            const response = await fetch(`http://localhost:3001/api/applications/${id}`, {
+            const response = await fetch(`${API_URL}/api/applications/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -72,7 +73,7 @@ function Dashboard() {
                 )
                 // Refresh stats
                 const statsRes = await fetch(
-                    'http://localhost:3001/api/applications/stats',
+                    '${API_URL}/api/applications/stats',
                     { headers: { 'Authorization': `Bearer ${token}` } }
                 )
                 const statsData = await statsRes.json()
@@ -89,7 +90,7 @@ function Dashboard() {
         }
 
         try {
-            const response = await fetch(`http://localhost:3001/api/applications/${id}`, {
+            const response = await fetch(`${API_URL}/api/applications/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             })
@@ -99,7 +100,7 @@ function Dashboard() {
                 setApplications(prev => prev.filter(app => app.id !== id))
                 // Refresh stats
                 const statsRes = await fetch(
-                    'http://localhost:3001/api/applications/stats',
+                    '${API_URL}/api/applications/stats',
                     { headers: { 'Authorization': `Bearer ${token}` } }
                 )
                 const statsData = await statsRes.json()

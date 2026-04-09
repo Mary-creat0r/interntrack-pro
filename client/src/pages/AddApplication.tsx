@@ -1,3 +1,4 @@
+import API_URL from '../config';
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
@@ -24,7 +25,7 @@ function AddApplication() {
         setLoading(true)
 
         try {
-            const response = await fetch('http://localhost:3001/api/applications', {
+            const response = await fetch(`${API_URL}/api/applications`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
