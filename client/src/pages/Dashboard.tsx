@@ -52,6 +52,63 @@ function Dashboard() {
             setLoading(false)
         }
     }
+    const handleStatusUpdate = async (id: number, newStatus: string) => {
+        try {
+            const response = await fetch(`http://localhost:3001/api/applications/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+
+            if (response.ok) {
+                // Update local state immediately — no need to refetch
+                setApplications(prev =>
+                    prev.map(app =>
+                        app.id === id ? { ...app, status: newStatus } : app
+                    )
+                )
+                // Refresh stats
+                const statsRes = await fetch(
+                    'http://localhost:3001/api/applications/stats',
+                    { headers: { 'Authorization': `Bearer ${token}` } }
+                )
+                const statsData = await statsRes.json()
+                setStats(statsData)
+            }
+        } catch (err) {
+            console.error('Failed to update status')
+        }
+    }
+
+    const handleDelete = async (id: number) => {
+        if (!window.confirm('Are you sure you want to delete this application?')) {
+            return
+        }
+
+        try {
+            const response = await fetch(`http://localhost:3001/api/applications/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+
+            if (response.ok) {
+                // Remove from local state immediately
+                setApplications(prev => prev.filter(app => app.id !== id))
+                // Refresh stats
+                const statsRes = await fetch(
+                    'http://localhost:3001/api/applications/stats',
+                    { headers: { 'Authorization': `Bearer ${token}` } }
+                )
+                const statsData = await statsRes.json()
+                setStats(statsData)
+            }
+        } catch (err) {
+            console.error('Failed to delete application')
+        }
+    }
 
     const handleLogout = () => {
         logout()
@@ -154,15 +211,35 @@ function Dashboard() {
                                 key={app.id}
                                 className="bg-white rounded-xl p-5 shadow-sm border border-gray-200 hover:shadow-md transition"
                             >
+                                {/* Card header */}
                                 <div className="flex justify-between items-start mb-3">
-                                    <div>
+                                    <div className="flex-1">
                                         <h3 className="font-semibold text-gray-800">{app.company}</h3>
                                         <p className="text-sm text-gray-500">{app.role}</p>
                                     </div>
-                                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColours[app.status]}`}>
-                    {app.status}
-                  </span>
+                                    <button
+                                        onClick={() => handleDelete(app.id)}
+                                        className="text-gray-300 hover:text-red-500 transition ml-2 text-lg leading-none"
+                                        title="Delete application"
+                                    >
+                                        ×
+                                    </button>
                                 </div>
+
+                                {/* Status dropdown */}
+                                <select
+                                    value={app.status}
+                                    onChange={(e) => handleStatusUpdate(app.id, e.target.value)}
+                                    className={`text-xs px-2 py-1 rounded-full font-medium border-0 cursor-pointer mb-3 ${statusColours[app.status]}`}
+                                >
+                                    <option value="APPLIED">Applied</option>
+                                    <option value="INTERVIEW">Interview</option>
+                                    <option value="ASSESSMENT">Assessment</option>
+                                    <option value="OFFER">Offer</option>
+                                    <option value="REJECTED">Rejected</option>
+                                </select>
+
+                                {/* Dates */}
                                 <p className="text-xs text-gray-400">
                                     Applied: {new Date(app.appliedDate).toLocaleDateString()}
                                 </p>
@@ -171,17 +248,33 @@ function Dashboard() {
                                         Next: {new Date(app.nextActionDate).toLocaleDateString()}
                                     </p>
                                 )}
+
+                                {/* Notes */}
                                 {app.notes && (
-                                    <p className="text-xs text-gray-500 mt-2 truncate">{app.notes}</p>
+                                    <p className="text-xs text-gray-500 mt-2 truncate">
+                                        {app.notes}
+                                    </p>
                                 )}
+                                {/* Job URL */}
+                                {app.jobUrl && (
+                                    <a
+                                    href={app.jobUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-xs text-blue-500 hover:underline mt-1 block truncate"
+                                    >
+                                    View job posting →
+                                    </a>
+                                    )}
                             </div>
                         ))}
                     </div>
-                )}
-
+                    )}
             </main>
         </div>
     )
 }
 
 export default Dashboard
+
+
