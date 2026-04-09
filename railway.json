@@ -1,0 +1,10 @@
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "cd server && npm install && npx prisma generate && npm run build"
+  },
+  "deploy": {
+    "startCommand": "cd server && npm start",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
