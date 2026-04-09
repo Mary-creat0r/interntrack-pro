@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon --exec ts-node server.ts --watch server",
     "build": "tsc  && cp swagger.yaml dist/swagger.yaml",
-    "start": "node dist/server.js"
+    "start": "npx prisma migrate deploy && node dist/server.js"
   },
   "keywords": [],
   "author": "",
