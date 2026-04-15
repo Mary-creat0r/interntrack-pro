@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon --exec ts-node server.ts --watch server",
     "build": "tsc  && cp swagger.yaml dist/swagger.yaml",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -28,12 +29,15 @@
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.4.0",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/yamljs": "^0.2.34",
+    "jest": "^30.3.0",
     "nodemon": "^3.1.14",
     "prisma": "^7.5.0",
+    "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "yamljs": "^0.3.0"

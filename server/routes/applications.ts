@@ -2,6 +2,7 @@ import { authenticateToken, AuthRequest } from "../middleware/auth";
 import prisma from "../lib/prisma";
 import {Router, Request, Response } from 'express';
 import { z } from 'zod';
+import { calculateResponseRate, groupByStatus } from '../utils/statsUtils';
 
 const router = Router();
 //Zod schema
@@ -48,7 +49,8 @@ router.get('/stats', authenticateToken, async (req:AuthRequest, res:Response) =>
                 status: {not: 'APPLIED'}}
         });
 //Percentage of applications responded
-        const responseRate = total > 0 ? Math.round((responded / total) * 100) : 0;
+        const responseRate = calculateResponseRate(total, responded);
+     //   const responseRate = total > 0 ? Math.round((responded / total) * 100) : 0;
 
 //send the result as JSON
         res.json({
