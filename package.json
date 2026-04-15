@@ -4,5 +4,9 @@
   "scripts": {
     "build": "cd server && npm install && npx prisma generate && npm run build",
     "start": "cd server && npm start"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.6.0"
   }
 }
