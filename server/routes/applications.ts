@@ -2,6 +2,7 @@ import { authenticateToken, AuthRequest } from "../middleware/auth";
 import prisma from "../lib/prisma";
 import {Router, Request, Response } from 'express';
 import { z } from 'zod';
+
 const router = Router();
 //Zod schema
 const applicationSchema = z.object({
@@ -13,6 +14,10 @@ const applicationSchema = z.object({
     notes: z.string().max(1000).optional(),
     jobUrl: z.string().url().nullable().optional()
 });
+
+
+// All fields optional for PUT — only validate what's sent
+const updateApplicationSchema = applicationSchema.partial();
 
 //GET/api/applications/stats
 //Returns stats
@@ -152,6 +157,19 @@ router.put('/:id', authenticateToken, async (req:AuthRequest, res:Response) => {
         const id = parseInt(req.params.id as string);
         const userId = req.user!.userId;
 
+        // Zod validation
+        const result = updateApplicationSchema.safeParse(req.body);
+        if (!result.success) {
+            res.status(400).json({
+                error: 'Validation failed',
+                details: result.error.issues.map(i => ({
+                    field: i.path.join('.'),
+                    message: i.message
+                }))
+            });
+            return;
+        }
+
         const existing = await prisma.application.findFirst(
             {where: {id, userId }}
         );
@@ -165,7 +183,7 @@ router.put('/:id', authenticateToken, async (req:AuthRequest, res:Response) => {
 
         const application = await prisma.application.update({
             where: { id },
-            data: req.body
+            data: result.data
         });
 
         res.json({
