@@ -41,6 +41,12 @@ function Dashboard() {
                 fetch(`${API_URL}/api/applications`, { headers}),
                 fetch(`${API_URL}/api/applications/stats`, { headers })
             ])
+            //Check for expired/invalid token
+            if (appsRes.status === 401 || statsRes.status === 401) {
+                logout()
+                navigate('/login')
+                return
+            }
 
             const appsData = await appsRes.json()
             const statsData = await statsRes.json()

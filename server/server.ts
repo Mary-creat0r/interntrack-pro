@@ -33,10 +33,6 @@ const swaggerDocument = YAML.load(
 );
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-//Serve the landing page
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'client', 'public', 'index.html'));
-});
 
 //Health check-confirms API is running
 app.get('/api/health', (req, res) => {

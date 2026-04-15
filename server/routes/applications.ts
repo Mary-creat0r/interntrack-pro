@@ -1,9 +1,18 @@
 import { authenticateToken, AuthRequest } from "../middleware/auth";
 import prisma from "../lib/prisma";
 import {Router, Request, Response } from 'express';
+import { z } from 'zod';
 const router = Router();
-
-
+//Zod schema
+const applicationSchema = z.object({
+    company: z.string().min(1, 'Company is required').max(200),
+    role: z.string().min(1, 'Role is required').max(200),
+    status: z.enum(['APPLIED', 'INTERVIEW', 'ASSESSMENT', 'OFFER', 'REJECTED']),
+    appliedDate: z.string().optional(),
+    nextActionDate: z.string().nullable().optional(),
+    notes: z.string().max(1000).optional(),
+    jobUrl: z.string().url().nullable().optional()
+});
 
 //GET/api/applications/stats
 //Returns stats
@@ -90,17 +99,25 @@ router.get('/:id', authenticateToken, async (req:AuthRequest, res:Response) => {
 
 //POST/api/applications
 //Create a new application
-router.post('/', authenticateToken, async (req:AuthRequest, res:Response) => {
+router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     try {
-        const {company, role, status, appliedDate, nextActionDate, notes, jobUrl} = req.body;
-        const userId = req.user!.userId;
+        // ← Replace manual check with Zod validation
+        const result = applicationSchema.safeParse(req.body);
 
-        if (!company || !role || !status) {
-            res.status(404).json({
-                error: 'Company, role and status are required'
+        if (!result.success) {
+            res.status(400).json({
+                error: 'Validation failed',
+                details: result.error.issues.map(i => ({
+                    field: i.path.join('.'),
+                    message: i.message
+                }))
             });
             return;
         }
+
+        // Use validated data from result.data instead of req.body
+        const { company, role, status, appliedDate, nextActionDate, notes, jobUrl } = result.data;
+        const userId = req.user!.userId;
 
         const application = await prisma.application.create({
             data: {
@@ -111,7 +128,7 @@ router.post('/', authenticateToken, async (req:AuthRequest, res:Response) => {
                 nextActionDate: nextActionDate ? new Date(nextActionDate) : null,
                 notes: notes || '',
                 jobUrl: jobUrl || null,
-                userId // real userId from JWT token
+                userId
             }
         });
 
@@ -119,10 +136,13 @@ router.post('/', authenticateToken, async (req:AuthRequest, res:Response) => {
             message: 'Application created successfully.',
             application
         });
-    } catch(error) {
+    } catch (error) {
+        console.error('POST error:', error);
         res.status(500).json({ error: 'Failed to create application' });
     }
-    });
+});
+
+
 
 
 //PUT /api/applications/:id
