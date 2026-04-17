@@ -8,6 +8,7 @@ const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET! as string;
 
 //POST /api/auth/register
+//Creates a new user account and returns a JWT token
 router.post('/register', async (req: Request, res: Response) => {
     try{
         const {name, email, password} = req.body;
@@ -19,7 +20,7 @@ router.post('/register', async (req: Request, res: Response) => {
             });
             return;
         }
-//check if the email already exists
+//check for duplicate email before attempting to create
         const existingUser = await prisma.user.findUnique({
             where: { email }
         });
@@ -30,7 +31,8 @@ router.post('/register', async (req: Request, res: Response) => {
             });
             return;
         }
-        //Hash the password
+        //Hash the password - never store plain text passwords
+        //bcrypt automatically generates and embeds a unique salt
         const hashedPassword = await bcrypt.hash(password, 10);
 
         //Create the user
@@ -42,12 +44,16 @@ router.post('/register', async (req: Request, res: Response) => {
             }
         });
 
-        //Generate JWT token
+        //Sign a JWT containing userId and email
+        //7d expiry balances security(limits exposure) with usability
+
         const token = jwt.sign(
             { userId: user.id, email: user.email },
             JWT_SECRET,
             { expiresIn: '7d' }
         );
+
+        //Return token but never the password hash
         res.status(201).json({
             message: 'Account created successfully',
             token,
@@ -67,6 +73,7 @@ router.post('/register', async (req: Request, res: Response) => {
 });
 
 //POST /api/auth/login
+//verifies credentials and returns a JWT token
 router.post('/login', async (req: Request, res: Response) => {
     try {
         const {email, password} = req.body;
@@ -83,6 +90,9 @@ router.post('/login', async (req: Request, res: Response) => {
             where: {email}
         });
 
+        //Return the same error message whether the user doesn't exist or
+        //the password is wrong - prevents user enumeration attacks
+
         if (!user) {
             res.status(401).json({
                 error: 'Invalid email or password'
@@ -90,7 +100,8 @@ router.post('/login', async (req: Request, res: Response) => {
             return;
         }
 
-        //Compare password with hash
+        //bcrypt.compare re-hashes the supplied password with the stored salt
+        // and checks if the results match - never decrypts the stored hash
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (!passwordMatch) {
