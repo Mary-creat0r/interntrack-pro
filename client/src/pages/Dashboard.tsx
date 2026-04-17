@@ -1,7 +1,8 @@
-import API_URL from '../config';
+import API_URL from '../config'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import ApplicationCard from '../components/ApplicationCard'
 
 interface Application {
     id: number
@@ -38,10 +39,11 @@ function Dashboard() {
             const headers = { 'Authorization': `Bearer ${token}` }
 
             const [appsRes, statsRes] = await Promise.all([
-                fetch(`${API_URL}/api/applications`, { headers}),
+                fetch(`${API_URL}/api/applications`, { headers }),
                 fetch(`${API_URL}/api/applications/stats`, { headers })
             ])
-            //Check for expired/invalid token
+
+            // Check for expired/invalid token
             if (appsRes.status === 401 || statsRes.status === 401) {
                 logout()
                 navigate('/login')
@@ -59,6 +61,7 @@ function Dashboard() {
             setLoading(false)
         }
     }
+
     const handleStatusUpdate = async (id: number, newStatus: string) => {
         try {
             const response = await fetch(`${API_URL}/api/applications/${id}`, {
@@ -71,7 +74,7 @@ function Dashboard() {
             })
 
             if (response.ok) {
-                // Update local state immediately — no need to refetch
+                // Update local state immediately — optimistic UI
                 setApplications(prev =>
                     prev.map(app =>
                         app.id === id ? { ...app, status: newStatus } : app
@@ -79,7 +82,7 @@ function Dashboard() {
                 )
                 // Refresh stats
                 const statsRes = await fetch(
-                    '${API_URL}/api/applications/stats',
+                    `${API_URL}/api/applications/stats`,
                     { headers: { 'Authorization': `Bearer ${token}` } }
                 )
                 const statsData = await statsRes.json()
@@ -106,7 +109,7 @@ function Dashboard() {
                 setApplications(prev => prev.filter(app => app.id !== id))
                 // Refresh stats
                 const statsRes = await fetch(
-                    '${API_URL}/api/applications/stats',
+                    `${API_URL}/api/applications/stats`,
                     { headers: { 'Authorization': `Bearer ${token}` } }
                 )
                 const statsData = await statsRes.json()
@@ -120,14 +123,6 @@ function Dashboard() {
     const handleLogout = () => {
         logout()
         navigate('/login')
-    }
-
-    const statusColours: Record<string, string> = {
-        APPLIED: 'bg-blue-100 text-blue-700',
-        INTERVIEW: 'bg-yellow-100 text-yellow-700',
-        ASSESSMENT: 'bg-purple-100 text-purple-700',
-        OFFER: 'bg-green-100 text-green-700',
-        REJECTED: 'bg-red-100 text-red-700'
     }
 
     if (loading) return (
@@ -214,74 +209,18 @@ function Dashboard() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {applications.map(app => (
-                            <div
+                            <ApplicationCard
                                 key={app.id}
-                                className="bg-white rounded-xl p-5 shadow-sm border border-gray-200 hover:shadow-md transition"
-                            >
-                                {/* Card header */}
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="flex-1">
-                                        <h3 className="font-semibold text-gray-800">{app.company}</h3>
-                                        <p className="text-sm text-gray-500">{app.role}</p>
-                                    </div>
-                                    <button
-                                        onClick={() => handleDelete(app.id)}
-                                        className="text-gray-300 hover:text-red-500 transition ml-2 text-lg leading-none"
-                                        title="Delete application"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-
-                                {/* Status dropdown */}
-                                <select
-                                    value={app.status}
-                                    onChange={(e) => handleStatusUpdate(app.id, e.target.value)}
-                                    className={`text-xs px-2 py-1 rounded-full font-medium border-0 cursor-pointer mb-3 ${statusColours[app.status]}`}
-                                >
-                                    <option value="APPLIED">Applied</option>
-                                    <option value="INTERVIEW">Interview</option>
-                                    <option value="ASSESSMENT">Assessment</option>
-                                    <option value="OFFER">Offer</option>
-                                    <option value="REJECTED">Rejected</option>
-                                </select>
-
-                                {/* Dates */}
-                                <p className="text-xs text-gray-400">
-                                    Applied: {new Date(app.appliedDate).toLocaleDateString()}
-                                </p>
-                                {app.nextActionDate && (
-                                    <p className="text-xs text-gray-400">
-                                        Next: {new Date(app.nextActionDate).toLocaleDateString()}
-                                    </p>
-                                )}
-
-                                {/* Notes */}
-                                {app.notes && (
-                                    <p className="text-xs text-gray-500 mt-2 truncate">
-                                        {app.notes}
-                                    </p>
-                                )}
-                                {/* Job URL */}
-                                {app.jobUrl && (
-                                    <a
-                                    href={app.jobUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-xs text-blue-500 hover:underline mt-1 block truncate"
-                                    >
-                                    View job posting →
-                                    </a>
-                                    )}
-                            </div>
+                                application={app}
+                                onStatusUpdate={handleStatusUpdate}
+                                onDelete={handleDelete}
+                            />
                         ))}
                     </div>
-                    )}
+                )}
             </main>
         </div>
     )
 }
 
 export default Dashboard
-
-
