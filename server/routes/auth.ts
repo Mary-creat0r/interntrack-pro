@@ -24,10 +24,6 @@ router.post('/register', async (req: Request, res: Response) => {
             where: { email }
         });
 
-
-        console.log('Checking email:', email);
-        console.log('Existing user found:', existingUser);
-
         if (existingUser) {
             res.status(409).json({
                 error: 'An account with this email already exists'
