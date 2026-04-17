@@ -12,6 +12,7 @@ function Login() {
     const { login } = useAuth()
     const navigate = useNavigate()
 
+    // Clears any previous error and shows loading state during submission
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
@@ -31,12 +32,13 @@ function Login() {
                 return
             }
 
+            // Save token and user to localStorage then redirect to dashboard
             login(data.token, data.user)
             navigate('/dashboard')
-
         } catch (err) {
             setError('Something went wrong. Please try again.')
         } finally {
+            // Always reset loading state whether request succeeded or failed
             setLoading(false)
         }
     }

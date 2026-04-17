@@ -1,3 +1,5 @@
+// userId is always extracted from the verified JWT token — never from req.body
+// This prevents users from accessing or modifying other users' applications
 import { authenticateToken, AuthRequest } from "../middleware/auth";
 import prisma from "../lib/prisma";
 import {Router, Request, Response } from 'express';
@@ -42,7 +44,7 @@ router.get('/stats', authenticateToken, async (req:AuthRequest, res:Response) =>
         }, {} as Record<string, number>);
 
 
-//Number of applications with response, not equal to applied
+// Counts applications with statuses beyond APPLIED as "responded"
         const responded = await prisma.application.count({
             where: {
                 userId,
@@ -172,6 +174,9 @@ router.put('/:id', authenticateToken, async (req:AuthRequest, res:Response) => {
             return;
         }
 
+        // findFirst with both id AND userId ensures users can only access their own data
+        // Even if a user knows another application's ID, this query returns null
+
         const existing = await prisma.application.findFirst(
             {where: {id, userId }}
         );
@@ -205,6 +210,8 @@ router.delete('/:id', authenticateToken, async (req:AuthRequest, res:Response) =
         const id = parseInt(req.params.id as string);
         const userId = req.user!.userId;
 
+        // findFirst with both id AND userId ensures users can only access their own data
+        // Even if a user knows another application's ID, this query returns null
         const existing = await prisma.application.findFirst({
             where: { id, userId }
         });

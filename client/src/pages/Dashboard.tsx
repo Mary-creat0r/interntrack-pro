@@ -38,12 +38,14 @@ function Dashboard() {
         try {
             const headers = { 'Authorization': `Bearer ${token}` }
 
+            // Fetch applications and stats simultaneously using Promise.all
+            // This is faster than sequential fetches — both requests run in parallel
             const [appsRes, statsRes] = await Promise.all([
                 fetch(`${API_URL}/api/applications`, { headers }),
                 fetch(`${API_URL}/api/applications/stats`, { headers })
             ])
 
-            // Check for expired/invalid token
+            // Check for expired/invalid token before parsing response
             if (appsRes.status === 401 || statsRes.status === 401) {
                 logout()
                 navigate('/login')
@@ -74,7 +76,8 @@ function Dashboard() {
             })
 
             if (response.ok) {
-                // Update local state immediately — optimistic UI
+                // Optimistic UI — update local state immediately without waiting for API
+                // This makes the status change feel instant to the user
                 setApplications(prev =>
                     prev.map(app =>
                         app.id === id ? { ...app, status: newStatus } : app

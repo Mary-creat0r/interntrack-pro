@@ -10,11 +10,11 @@ datasource db {
 
 model User {
 id          Int         @id @default(autoincrement())
-email       String      @unique
-password    String
+email       String      @unique     // Enforced at DB level - no duplicate accounts
+password    String                  // Stores bcrypt hash only - never plain text
 name        String
 createdAt   DateTime     @default(now())
-applications Application[]
+applications Application[]          // One user has many applications
 }
 
 model Application{
@@ -23,14 +23,15 @@ company         String
 role            String
 status          Status         @default(APPLIED)
 appliedDate     DateTime       @default(now())
-nextActionDate  DateTime?
+nextActionDate  DateTime?           //Replaces 'deadline' - useful at every pipeline stage
 notes           String?
 jobUrl          String?
 userId          Int
-user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)        //GDPR - deleting a user removes all their data
 updatedAt       DateTime        @updatedAt
 }
 
+//Enforces only valid pipeline statuses at the database level
 enum Status {
 APPLIED
 INTERVIEW
