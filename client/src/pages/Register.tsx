@@ -32,6 +32,9 @@ function Register() {
                 return
             }
 
+            console.log('Register response:', data)
+            console.log('User object:', data.user)
+
             login(data.token, data.user)
             navigate('/dashboard')
 

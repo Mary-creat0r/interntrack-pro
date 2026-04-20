@@ -75,6 +75,8 @@ router.post('/register', async (req: Request, res: Response) => {
 //POST /api/auth/login
 //verifies credentials and returns a JWT token
 router.post('/login', async (req: Request, res: Response) => {
+    console.log('LOGIN ROUTE HIT') // ← add this as first line
+    console.log('Request body:', JSON.stringify(req.body))
     try {
         const {email, password} = req.body;
 
@@ -118,11 +120,23 @@ router.post('/login', async (req: Request, res: Response) => {
             {expiresIn: '7d'}
         );
 
+        const responseData = {
+            message: 'Account login successfully',
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email
+            }
+        }
+
+        console.log('Login response being sent:', responseData)
         res.status(200).json({
             message: 'Account login successfully',
             token,
             user: {
                 id: user.id,
+                name: user.name,
                 email: user.email
             }
         });

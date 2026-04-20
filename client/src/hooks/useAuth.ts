@@ -27,7 +27,6 @@ export function useAuth() {
         localStorage.setItem('user', JSON.stringify(user))
         setToken(token)
         setUser(user)
-        console.log('Token saved:', token)
     }
 
     // Clears both React state and localStorage on logout

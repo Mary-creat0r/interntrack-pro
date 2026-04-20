@@ -32,6 +32,9 @@ function Login() {
                 return
             }
 
+            console.log('Login data received:', JSON.stringify(data))
+            console.log('User object:', JSON.stringify(data.user))
+
             // Save token and user to localStorage then redirect to dashboard
             login(data.token, data.user)
             navigate('/dashboard')
