@@ -57,6 +57,13 @@ Never commit your actual .env file.
 ## API Documentation
 Interactive Swagger docs available at /api-docs when server is running.
 
+## Running E2E Tests
+Install Playwright browsers first:
+npx playwright install
+
+Then with both servers running:
+npx playwright test
+
 ## Features
 - Register and login securely with JWT authentication
 - Add internship applications with company, role, status and dates
