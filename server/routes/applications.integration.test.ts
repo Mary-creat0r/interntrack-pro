@@ -24,11 +24,21 @@ describe('POST /api/auth/register', () => {
     });
 
     it('returns 409 when email already exists', async () => {
+        // First register a user
+        await request(app)
+            .post('/api/auth/register')
+            .send({
+                name: 'Duplicate User',
+                email: 'duplicate@test.com',
+                password: 'password123'
+            });
+
+       //Try to register again with the same email
         const response = await request(app)
             .post('/api/auth/register')
             .send({
-                name: 'Test User',
-                email: 'test@interntrack.com', // already exists in your DB
+                name: 'Duplicate User',
+                email: 'duplicate@test.com',
                 password: 'password123'
             });
         expect(response.status).toBe(409);
